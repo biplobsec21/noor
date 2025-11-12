@@ -38,11 +38,10 @@ class ChapterService
         }
 
         $chaptersData = Cache::remember($cacheKey, config('quran.cache.chapters_ttl'), function () use ($language) {
-
             return $this->makeApiRequest('chapters', ['language' => $language]);
         });
 
-
+        // dd('chaptersData', $chaptersData);
         return ChaptersResponse::fromArray($chaptersData);
     }
 
@@ -66,15 +65,15 @@ class ChapterService
         $cacheKey = "quran_chapter_info_{$chapterId}_{$language}" . ($locale ? "_{$locale}" : '');
 
         $params = ['language' => $language];
-
+        // dd($cacheKey);
         if ($locale) {
             $params['locale'] = $locale;
         }
-
+        dd($this->makeApiRequest("chapters/{$chapterId}/info", $params));
         $infoData = Cache::remember($cacheKey, config('quran.cache.chapter_info_ttl'), function () use ($chapterId, $params) {
             return $this->makeApiRequest("chapters/{$chapterId}/info", $params);
         });
-        // dd($infoData);
+        dd($infoData);
         return $infoData ? ChapterInfo::fromArray($infoData['chapter_info']) : null;
     }
 
