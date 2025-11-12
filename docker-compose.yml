@@ -1,0 +1,82 @@
+version: "3.8"
+
+networks:
+  noorpanel_network:
+    driver: bridge
+
+services:
+  app:
+    container_name: app
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/var/www/html:cached
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      # Local PostgreSQL for development
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=noorpanel
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      # Supabase credentials for production (kept for reference)
+      - SUPABASE_DB_HOST=vsucltqmzenytmkgmbhv.supabase.co
+      - SUPABASE_DB_PORT=5432
+      - SUPABASE_DB_DATABASE=postgres
+      - SUPABASE_DB_USERNAME=postgres
+      - SUPABASE_DB_PASSWORD=##kilban13#
+    depends_on:
+      postgres:
+        condition: service_healthy
+    working_dir: /var/www/html
+    networks:
+      - noorpanel_network
+
+  postgres:
+    container_name: noorpanel_postgres
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=noorpanel
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - noorpanel_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pgadmin:
+    container_name: noorpanel_pgadmin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@noorpanel.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    networks:
+      - noorpanel_network
+
+  redis:
+    container_name: noorpanel_redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - noorpanel_network
+
+volumes:
+  postgres_data:
